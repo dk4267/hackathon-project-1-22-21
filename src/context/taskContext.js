@@ -72,6 +72,7 @@ const addTodaysDate = (dispatch) => async() => {
 const addTask = (dispatch) => async(date, taskName, duration, satisfaction, mood, productivity, note) => {
     try {
         const result = await AsyncStorage.getItem('TASK_DATES');
+        let id;
         let dateData = {};
         let otherDates = [];
         if (result !== null) {
@@ -81,17 +82,26 @@ const addTask = (dispatch) => async(date, taskName, duration, satisfaction, mood
             dateData = { date: formatDate(date), tasks: [], note: ''};
         }
 
-        const newTask = { taskName, duration, satisfaction, mood, productivity, note };
+        let taskId = await AsyncStorage.getItem('TASK_ID');
+        if (taskId !== null) {
+            let taskIdNum = JSON.parse(taskId);
+            id = taskIdNum[0] + 1;
+        } else {
+            id = 1;
+        }
+
+        const newTask = { id, taskName, duration, satisfaction, mood, productivity, note };
         dateData.tasks.push(newTask);
         otherDates.push(dateData);
         await AsyncStorage.setItem('TASK_DATES', JSON.stringify(otherDates));
+        await AsyncStorage.setItem('TASK_ID', JSON.stringify([id]));
 
     } catch (err) {
         console.log(err);
     }
 }
 
-const editTask = (dispatch) => async(date, taskName, duration, satisfaction, mood, productivity, note) => {
+const editTask = (dispatch) => async(date, id, taskName, duration, satisfaction, mood, productivity, note) => {
     try {
         const result = await AsyncStorage.getItem('TASK_DATES');
         let dateData = {};
@@ -104,10 +114,10 @@ const editTask = (dispatch) => async(date, taskName, duration, satisfaction, moo
             dateData = { date: formatDate(date), tasks: [], note: ''};
         }
 
-        const editedTask = { taskName, duration, satisfaction, mood, productivity, note };
+        const editedTask = { id, taskName, duration, satisfaction, mood, productivity, note };
         otherTasks = [];
         if (dateData.tasks.length !== 0) {
-            otherTasks = dateData.tasks.filter(item => item.taskName !== taskName);
+            otherTasks = dateData.tasks.filter(item => item.id !== id);
         } 
         otherTasks.push(editedTask);
         dateData.tasks = otherTasks;
@@ -119,7 +129,7 @@ const editTask = (dispatch) => async(date, taskName, duration, satisfaction, moo
     }
 }
 
-const deleteTask = (dispatch) => async(date, taskName) => {
+const deleteTask = (dispatch) => async(date, id) => {
     try {
         const result = await AsyncStorage.getItem('TASK_DATES');
         let dateData = {};
@@ -129,18 +139,12 @@ const deleteTask = (dispatch) => async(date, taskName) => {
             dateData = { date: formatDate(date), tasks: [], note: ''};
         }
 
-        const otherTasks = dateData.tasks.filter(item => item.taskName != taskName);
+        const otherTasks = dateData.tasks.filter(item => item.id != id);
         dateData.tasks = otherTasks;
         otherDates.push(dateData);
         await AsyncStorage.setItem('TASK_DATES', JSON.stringify(otherDates));
 
 
-
-
-        //get dates
-        //find specified date
-        //find specified task, remove from array
-        //combine, save in async storage
     } catch (err) {
         console.log(err);
     }
