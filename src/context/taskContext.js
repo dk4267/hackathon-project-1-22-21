@@ -1,8 +1,19 @@
 import { AsyncStorage } from '@react-native-async-storage/async-storage';
 import createCustomContext from './CreateCustomContext';
 
+export const formatDate = (date) => {
+    const initDate = new Date(date);
+    const year = initDate.getFullYear();
+    const month = initDate.getMonth();
+    const day = initDate.getDate();
+    return (day + '/' + month + '/' + year);
+}
+
 const taskReducer = (state, action) => {
     switch(action.type) {
+        case 'get_all_dates':
+        case 'get_one_date':
+            return action.payload;
         default: 
             return state;
     }
@@ -10,20 +21,30 @@ const taskReducer = (state, action) => {
 
 const getAllDates = (dispatch) => async() => {
     try {
-        //get from async storage
-        //if null, pass empty array to dispatch
-        //if not, pass data to dispatch
+        const result = await AsyncStorage.getItem('TASK_DATES');
+        if (result === null) {
+            dispatch({ type: 'get_all_dates', payload: []});
+        } else {
+            dispatch({ type: 'get_all_dates', payload: JSON.parse(result)});
+            console.log(result);
+        }
+
     } catch (err) {
         console.log(err);
     }
 }
 
-const getToday = (dispatch) => async() => {
+const getOneDate = (dispatch) => async(date) => {
     try {
-        //get dates from async storage
-        //get today's date
-        //find today's date from async data
-        //pass to dispatch if not null
+        const result = await AsyncStorage.getItem('TASK_DATES');
+        if (result === null) {
+            dispatch({ type: 'get_one_date', payload: {}});
+        } else {
+            const targetDate = JSON.parse(result).filter(item => item.date === date);
+            dispatch({ type: 'get_one_date', payload: JSON.parse(targetDate[0])});
+            console.log(targetDate);
+        }
+
     } catch (err) {
         console.log(err);
     }
@@ -31,40 +52,91 @@ const getToday = (dispatch) => async() => {
 
 const addTodaysDate = (dispatch) => async() => {
     try {
-        //get dates
-        //find today's date
-        //add date to date array with empty data
-        //save to async storage
+        const result = await AsyncStorage.getItem('TASK_DATES');
+        const todaysDate = formatDate(new Date());
+        let dateArray = [];
+
+        if (result !== null) {
+            dateArray = JSON.parse(result);
+        }
+
+        const dateData = { date: todaysDate, tasks: [], note: ''};
+        dateArray.push(dateData);
+        await AsyncStorage.setItem('TASK_DATES', JSON.stringify(dateArray));
+
     } catch (err) {
         console.log(err);
     }
 }
 
-const addTask = (dispatch) => async(date, info) => {
+const addTask = (dispatch) => async(date, taskName, duration, satisfaction, mood, productivity, note) => {
     try {
-        //get dates
-        //find specified date
-        //add task to date's task array
-        //save in async storage
+        const result = await AsyncStorage.getItem('TASK_DATES');
+        let dateData = {};
+        let otherDates = [];
+        if (result !== null) {
+            dateData = JSON.parse(result).filter(item => item.date === date);
+            otherDates = JSON.parse(result).filter(item => item.date !== date);
+        } else {
+            dateData = { date: formatDate(date), tasks: [], note: ''};
+        }
+
+        const newTask = { taskName, duration, satisfaction, mood, productivity, note };
+        dateData.tasks.push(newTask);
+        otherDates.push(dateData);
+        await AsyncStorage.setItem('TASK_DATES', JSON.stringify(otherDates));
+
     } catch (err) {
         console.log(err);
     }
 }
 
-const editTask = (dispatch) => async(date, task, info) => {
+const editTask = (dispatch) => async(date, taskName, duration, satisfaction, mood, productivity, note) => {
     try {
-        //get dates
-        //find specified date
-        //find specified task
-        //put in new info, combine into all data
-        //save in async storage
+        const result = await AsyncStorage.getItem('TASK_DATES');
+        let dateData = {};
+        let otherDates = [];
+        if (result !== null) {
+            dateData = JSON.parse(result).filter(item => item.date === date);
+            otherDates = JSON.parse(result).filter(item => item.date !== date);
+        } else {
+            //should not happen
+            dateData = { date: formatDate(date), tasks: [], note: ''};
+        }
+
+        const editedTask = { taskName, duration, satisfaction, mood, productivity, note };
+        otherTasks = [];
+        if (dateData.tasks.length !== 0) {
+            otherTasks = dateData.tasks.filter(item => item.taskName !== taskName);
+        } 
+        otherTasks.push(editedTask);
+        dateData.tasks = otherTasks;
+        otherDates.push(dateData);
+        await AsyncStorage.setItem('TASK_DATES', JSON.stringify(otherDates));        
+
     } catch (err) {
         console.log(err);
     }
 }
 
-const deleteTask = (dispatch) => async(date, task) => {
+const deleteTask = (dispatch) => async(date, taskName) => {
     try {
+        const result = await AsyncStorage.getItem('TASK_DATES');
+        let dateData = {};
+        if (result !== null) {
+            dateData = JSON.parse(result).filter(item => item.date === date);
+        } else {
+            dateData = { date: formatDate(date), tasks: [], note: ''};
+        }
+
+        const otherTasks = dateData.tasks.filter(item => item.taskName != taskName);
+        dateData.tasks = otherTasks;
+        otherDates.push(dateData);
+        await AsyncStorage.setItem('TASK_DATES', JSON.stringify(otherDates));
+
+
+
+
         //get dates
         //find specified date
         //find specified task, remove from array
@@ -74,4 +146,4 @@ const deleteTask = (dispatch) => async(date, task) => {
     }
 }
 
-export const { Provider, Context } = createCustomContext(taskReducer, {getAllDates, getToday, addTodaysDate, addTask, editTask, deleteTask}, []);
+export const { Provider, Context } = createCustomContext(taskReducer, {getAllDates, getOneDate, addTodaysDate, addTask, editTask, deleteTask}, []);
