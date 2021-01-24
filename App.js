@@ -8,6 +8,7 @@ import HomeScreen from './src/screens/HomeScreen';
 import EditScreen from './src/screens/EditScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
 import InsightScreen from './src/screens/InsightScreen';
+import DisplayScreen from './src/screens/DisplayScreen';
 
 const homeStack = createStackNavigator();
 
@@ -19,6 +20,7 @@ const Home = () => {
   return (
     <homeStack.Navigator initialRouteName='Home'>
       <homeStack.Screen name='Home' component={HomeScreen} options={{title: 'App Name'}}/>
+      <homeStack.Screen name='Display' component={DisplayScreen} options={{title: 'Task'}}/>
       <homeStack.Screen name='Edit' component={EditScreen} options={{title: 'Edit'}}/>
     </homeStack.Navigator>
   );
@@ -28,6 +30,7 @@ const History = () => {
   return (
     <historyStack.Navigator initialRouteName='History'>
       <historyStack.Screen name='History' component={HistoryScreen} options={{title: 'History'}}/>
+      <homeStack.Screen name='DisplayHistory' component={DisplayScreen} options={{title: 'Task'}}/>
       <historyStack.Screen name='EditHistory' component={EditScreen} options={{title: 'Edit'}}/>
     </historyStack.Navigator>
   );
@@ -45,5 +48,11 @@ const App = () => {
   );
 }
 
-export default App;
+export default () => {
+  return (
+    <Provider>
+      <App />
+    </Provider>
+  )
+}
 
